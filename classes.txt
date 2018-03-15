@@ -1,0 +1,154 @@
+// COMMON ABSTRACT CLASSES
+
+Node {
+  int    cost
+  Node[] adjacent
+}
+
+Graph<T> { // Most likely from an outside library, although we could implement our own
+  Map<int, T> vertices
+
+  void addNode(node)
+  void addEdge(node1, node2)
+}
+
+Unit {
+  int    id
+  string name
+  int    power
+  string status
+  Node   position
+
+  int  create()
+  void delete()
+  bool canMove(Node newPosition)
+}
+
+Action {
+  int    id
+  string type
+  Unit   activeUnit
+  Node[] changedNodes
+
+  bool apply()
+}
+
+Board {
+  string      type
+  Graph<Node> nodes
+  Unit[]      units
+}
+
+State {
+  int      id
+  Action[] actions
+
+  void process()
+}
+
+Game {
+  int      id
+  string   name
+  Board    board
+  Player[] players
+  State[]  states
+  DateTime deadline
+  bool     complete
+  
+  int  addPlayer(player)
+  void removePlayer(id)
+}
+
+Player {
+  int    id
+  string name
+  string email
+  Game[] games
+}
+
+// DIPLOMACY CLASSES
+
+Diplomacy extends Game {
+  const name 'Diplomacy'
+
+  string displayName()
+}
+
+Phase extends State {
+  const year 1900
+  const types ['SPRING','FALL','RETREAT','WINTER']
+  
+  int     year
+  string  type
+
+  Phase(y, t)
+
+  string displayName()
+}
+
+Order extends Action {
+  const types ['HOLD','MOVE','SUPPORT','RETREAT','DESTROY','BUILD']
+}
+
+Country extends Player {
+  Province[] provinces
+  Unit[]     units
+}
+
+DiplomacyNode extends Node {
+  string name
+  string abbreviation
+  Unit[] units
+
+  bool   hasUnits()
+  string displayName()
+  string displayAbbr()
+}
+
+Province extends Node {
+  const supply 1
+
+  bool   passable
+  bool   coast
+  bool   center
+
+  Province(n)
+  Province(n, p, co, ce)
+
+  bool isPassable()
+  bool isCoast()
+  bool isCenter()
+  int  supply()
+}
+
+Sea extends Node {
+  Sea(n)
+}
+
+DiplomacyUnit extends Unit {
+  const power 1
+
+  string prefix
+
+  string displayName()
+  bool   hold()
+  bool   move()
+  bool   support()
+  bool   retreat()
+  void   destroy()
+  int    build()
+}
+
+Army extends DiplomacyUnit {
+  const prefix 'Army'
+
+  Army()
+}
+
+Fleet extends DiplomacyUnit {
+  const prefix 'Fleet'
+
+  Fleet()
+
+  bool convoy()
+}

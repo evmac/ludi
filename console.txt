@@ -1,0 +1,38 @@
+╲ │ ╱
+─(U)─
+╱ │ ╲
+┬╳┴
+  ICE  NWS
+  ( )--{ }  NOR
+   |     \--( )
+NAO|     |\
+  { } CLY| \EDI
+IRE| \--( )-( )--
+  ( )  |LVP|/ |YOR
+   |  |-( )-( )--
+IRI| / WAL| / \LON
+  ( )----( )---( )
+
+
+DIPLOMACY:CLASSIC ┌─────────────┬─────────BAR{ }───────────────────┐
+    ┌─────────NWS{ }─────┬──NOR(*)───────────────────┬─────────STP(*)
+    │      ┌──────┤      │      ├──SWE(*)─────┬──FIN( )            │
+NAO{ }─CLY( )─EDI(*)─────┼──SKA{ }─────┤  BOT{ }                   │
+    │ ╲    │ ╱    │  NTS{ }─────┼──DEN(*)     ├─────────LIV( )─────┤
+    │  LVP(*)─YOR( )─────┤  HEL{ }─────┼──BAL{ }                   │ 
+    │ ╱    │ ╱    │      │      │      │         PRU( )            │ 
+IRI{ }─WAL( )─LON(*) BEL(*)─HOL(*)─KIE(*) BER(*)            ┌──MOS(*)
+    │      ├──────┘      │ ╲                  ├  SIL( ) WAR(*)     │
+    ├──ENG{ }─────┬──PIC( ) RUH( )                            
+    │      │      │      │
+    │  BRE(*)─PAR(*) BUR( ) SWI(#) MUN(*) BOH( ) GAL( ) UKR( ) SEV(*)
+    │      │      │      │
+MAO{ }─────┴──GAS( ) MAR(*) PIE( ) TYR( ) VIE(*) BUD(*) RUM( ) BLA{ }
+    │
+POR(*) SPA(*) LYO{ } TUS( ) VEN(*) TRI(*) SER(*) BUL(*)
+
+ROM(*) APU( ) ADR{ } ALB( ) CON(*) ANK(*) ARM( )
+
+WES{ } TYR{ } NAP(*) GRE(*) AEG{ } SMY( )
+
+NAF( ) TUN(*) ION{ } EAS{ } SYR( )
