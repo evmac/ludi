@@ -13,6 +13,9 @@ logs
 results
 tmp
 
+classes.txt
+console.txt
+
 # Editors
 .idea
 .iml

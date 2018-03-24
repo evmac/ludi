@@ -5,9 +5,10 @@ import { Request, Response } from 'express';
  * Game by ID
  */
 export let getGame = (req: Request, res: Response) => {
-  res.render('game', {
-    title: 'Game'
-  });
+  // res.render('game', {
+  //   title: 'Game'
+  // });
+  // TODO: Update with React SSR
 };
 
 /**

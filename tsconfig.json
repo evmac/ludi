@@ -1,17 +1,20 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es6",
+    "target": "es5",
     "esModuleInterop": true,
     "noImplicitAny": true,
     "moduleResolution": "node",
     "sourceMap": true,
     "outDir": "dist",
-    "baseUrl": ".",
+    "jsx": "react",
+    "baseUrl": "src",
+    "strict": true,
     "paths": {
       "*": ["node_modules/*", "src/types/*"]
     },
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": ["src/**/*"]
 }

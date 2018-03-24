@@ -1,22 +1,28 @@
-import passport from 'passport';
-import request from 'request';
-import passportLocal from 'passport-local';
-import passportFacebook from 'passport-facebook';
+/**
+ * Passport strategies
+ *
+ * @author Evan MacGregor
+ */
 import _ from 'lodash';
+import passport, { Profile } from 'passport';
+import request from 'request';
+import Local from 'passport-local';
+import Facebook from 'passport-facebook';
+import Google from 'passport-google-oauth';
 
-// import { User, UserType } from '../models/User';
-import { default as User } from '../models/User';
+import User, { AuthToken } from '../models/User';
 import { Request, Response, NextFunction } from 'express';
 
-const LocalStrategy = passportLocal.Strategy;
-const FacebookStrategy = passportFacebook.Strategy;
+const LocalStrategy = Local.Strategy;
+const FacebookStrategy = Facebook.Strategy;
+const GoogleStrategy = Google.OAuth2Strategy;
 
 passport.serializeUser<any, any>((user, done) => {
   done(undefined, user.id);
 });
 
 passport.deserializeUser((id, done) => {
-  User.findById(id, (err, user) => {
+  User.find([id], (err: Error, user: User) => {
     done(err, user);
   });
 });
@@ -26,20 +32,24 @@ passport.deserializeUser((id, done) => {
  */
 passport.use(
   new LocalStrategy({ usernameField: 'email' }, (email, password, done) => {
-    User.findOne({ email: email.toLowerCase() }, (err, user: any) => {
+    User.find([email.toLowerCase()], (err: Error, user: User) => {
       if (err) {
         return done(err);
       }
+
       if (!user) {
         return done(undefined, false, { message: `Email ${email} not found.` });
       }
-      user.comparePassword(password, (err: Error, isMatch: boolean) => {
+
+      user.checkPassword(password, (err: Error, isMatch: boolean) => {
         if (err) {
           return done(err);
         }
+
         if (isMatch) {
           return done(undefined, user);
         }
+
         return done(undefined, false, {
           message: 'Invalid email or password.'
         });
@@ -75,32 +85,39 @@ passport.use(
       profileFields: ['name', 'email', 'link', 'locale', 'timezone'],
       passReqToCallback: true
     },
-    (req: any, accessToken, refreshToken, profile, done) => {
+    (
+      req: any,
+      accessToken: string,
+      refreshToken: string,
+      profile: Facebook.Profile,
+      done: Function
+    ) => {
       if (req.user) {
-        User.findOne({ facebook: profile.id }, (err, existingUser) => {
+        User.find([profile.id], (err: Error, existingUser: User) => {
           if (err) {
             return done(err);
           }
+
           if (existingUser) {
             req.flash('errors', {
-              msg:
-                'There is already a Facebook account that belongs to you. Sign in with that account or delete it, then link it with your current account.'
+              msg: `There is already a Facebook account that belongs to you. Sign in with that account or delete it, then link it with your current account.`
             });
             done(err);
           } else {
-            User.findById(req.user.id, (err, user: any) => {
+            User.find([req.user.id], (err: Error, user: User) => {
               if (err) {
                 return done(err);
               }
+
               user.facebook = profile.id;
-              user.tokens.push({ kind: 'facebook', accessToken });
-              user.profile.name =
-                user.profile.name ||
-                `${profile.name.givenName} ${profile.name.familyName}`;
-              user.profile.gender = user.profile.gender || profile._json.gender;
-              user.profile.picture =
-                user.profile.picture ||
-                `https://graph.facebook.com/${profile.id}/picture?type=large`;
+              user.tokens.push({ type: 'facebook', accessToken });
+              user.name = user.name || profile.displayName;
+              user.avatar =
+                user.avatar ||
+                new URL(
+                  `https://graph.facebook.com/${profile.id}/picture?type=large`
+                );
+
               user.save((err: Error) => {
                 req.flash('info', { msg: 'Facebook account has been linked.' });
                 done(err, user);
@@ -109,46 +126,141 @@ passport.use(
           }
         });
       } else {
-        User.findOne({ facebook: profile.id }, (err, existingUser) => {
+        User.find([profile.id], (err: Error, existingUser: User) => {
           if (err) {
             return done(err);
           }
+
           if (existingUser) {
             return done(undefined, existingUser);
           }
-          User.findOne(
-            { email: profile._json.email },
-            (err, existingEmailUser) => {
+
+          User.find([profile._json.email], (err: Error, existingEmailUser: User) => {
+            if (err) {
+              return done(err);
+            }
+
+            if (existingEmailUser) {
+              req.flash('errors', {
+                msg:
+                  'There is already an account using this email address. Sign in to that account and link it with Facebook manually from Account Settings.'
+              });
+              done(err);
+            } else {
+              const user: any = new User();
+
+              user.email = profile._json.email;
+              user.facebook = profile.id;
+              user.tokens.push({ type: 'facebook', accessToken });
+              user.profile.name = profile.displayName;
+              user.profile.gender = profile._json.gender;
+              user.profile.picture = `https://graph.facebook.com/${
+                profile.id
+              }/picture?type=large`;
+              user.profile.location = profile._json.location
+                ? profile._json.location.name
+                : '';
+              user.save((err: Error) => {
+                done(err, user);
+              });
+            }
+          });
+        });
+      }
+    }
+  )
+);
+
+/**
+ * Sign in with Google.
+ */
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: '/auth/google/callback',
+      passReqToCallback: true
+    },
+    (
+      req: any,
+      accessToken: string,
+      refreshToken: string,
+      profile: Google.Profile,
+      done: Function
+    ) => {
+      if (req.user) {
+        User.find([profile.id], (err: Error, existingUser: User) => {
+          if (err) {
+            return done(err);
+          }
+
+          if (existingUser) {
+            req.flash('errors', {
+              msg: `There is already a Google account that belongs to you. Sign in with that account or delete it, then link it with your current account.`
+            });
+            done(err);
+          } else {
+            User.find([req.user.id], (err: Error, user: User) => {
               if (err) {
                 return done(err);
               }
-              if (existingEmailUser) {
-                req.flash('errors', {
-                  msg:
-                    'There is already an account using this email address. Sign in to that account and link it with Facebook manually from Account Settings.'
-                });
-                done(err);
-              } else {
-                const user: any = new User();
-                user.email = profile._json.email;
-                user.facebook = profile.id;
-                user.tokens.push({ kind: 'facebook', accessToken });
-                user.profile.name = `${profile.name.givenName} ${
-                  profile.name.familyName
-                }`;
-                user.profile.gender = profile._json.gender;
-                user.profile.picture = `https://graph.facebook.com/${
-                  profile.id
-                }/picture?type=large`;
-                user.profile.location = profile._json.location
-                  ? profile._json.location.name
-                  : '';
-                user.save((err: Error) => {
-                  done(err, user);
-                });
-              }
+
+              user.google = profile.id;
+              user.tokens.push({ type: 'google', accessToken });
+              user.name = user.name || profile.displayName;
+              user.avatar =
+                profile.photos && profile.photos.length
+                  ? new URL(profile.photos[0].value)
+                  : undefined;
+
+              user.save((err: Error) => {
+                req.flash('info', { msg: 'Google account has been linked.' });
+                done(err, user);
+              });
+            });
+          }
+        });
+      } else {
+        User.find([profile.id], (err: Error, existingUser: User) => {
+          if (err) {
+            return done(err);
+          }
+
+          if (existingUser) {
+            return done(undefined, existingUser);
+          }
+
+          User.find([profile._json.email], (err: Error, existingEmailUser: User) => {
+            if (err) {
+              return done(err);
             }
-          );
+
+            if (existingEmailUser) {
+              req.flash('errors', {
+                msg:
+                  'There is already an account using this email address. Sign in to that account and link it with Facebook manually from Account Settings.'
+              });
+              done(err);
+            } else {
+              const user = new User();
+
+              user.email = profile._json.email;
+              user.google = profile.id;
+              user.tokens.push({ type: 'google', accessToken });
+              user.name = profile.displayName;
+              user.avatar =
+                profile.photos && profile.photos.length
+                  ? new URL(profile.photos[0].value)
+                  : undefined;
+              user.location = profile._json.location
+                ? profile._json.location.name
+                : '';
+              user.save((err: Error) => {
+                done(err, user);
+              });
+            }
+          });
         });
       }
     }
